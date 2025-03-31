@@ -1,96 +1,133 @@
-# Video Button Interface
+# Video Button Interface for Raspberry Pi
 
-The **Video Button Interface** is a Raspberry Pi project that provides a web-based interface for controlling video playback and image display. It integrates a Flask web server with hardware control via GPIO pins and uses system utilities like `fbi` and `mpv` for media display. Physical buttons connected to the Raspberry Pi trigger video playback, while the web interface allows remote configuration and testing.
+## Overview
 
-## Features
+The **Video Button Interface** is an interactive media control system designed specifically for Raspberry Pi 4. This application combines physical GPIO button controls with a web-based management interface to create an easy-to-use digital signage or interactive kiosk system.
 
-- **Web Interface**
-  - Displays current settings (active image and button-to-video assignments).
-  - Provides flash messages for success, error, or warning feedback.
-  - Allows file selection from available media and uploading of new files.
-  - Includes test playback buttons to simulate physical button presses.
+When a physical button is pressed, the system plays a designated video in full-screen mode on the connected display. When no video is playing, a configurable image is shown. The accompanying web interface allows administrators to change videos, update the display image, and test functionality without physical access to the buttons.
 
-- **Hardware Integration**
-  - Uses GPIO pins (default pins: 17, 27, 22) for physical button input.
-  - Implements a debounce mechanism to avoid false triggers.
-  - Supports three physical buttons to play corresponding videos.
+This system is ideal for:
+- Museum or gallery interactive displays
+- Information kiosks in public spaces
+- Educational exhibits
+- Retail product demonstrations
+- Trade show presentations
 
-- **Media Playback**
-  - Displays images using `fbi`.
-  - Plays videos in full-screen mode using `mpv`.
+## Key Features
 
-- **Logging & Error Handling**
-  - Detailed logging to both console and a log file.
-  - Graceful error handling using Flask flash messages.
-  - Checks for required system programs and directories during startup.
+### Hardware Integration
+- **Physical Button Control**: Connects to three physical buttons via GPIO pins (default: 17, 27, 22)
+- **Debounce Protection**: Sophisticated debounce algorithm prevents accidental double-triggers
+- **Visual Feedback**: Automatically returns to display image after video playback
 
-## Prerequisites
+### Web Management Interface
+- **Remote Administration**: Configure the system from any device on the same network
+- **Real-time Status**: View current configuration and playback status
+- **Media Management**: Upload new videos/images or select from existing files
+- **Button Testing**: Trigger videos directly from the web interface
 
-Before installing the software, ensure your Raspberry Pi 4 meets the following requirements:
+### Media Handling
+- **Image Display**: Shows a configurable standby image using `fbi` (Frame Buffer Imageviewer)
+- **Video Playback**: Full-screen, high-quality video using `mpv` with hardware acceleration
+- **Format Support**: Compatible with common image formats (PNG, JPG, GIF) and video formats (MP4, MOV, AVI, MKV)
+- **Flexible Assignment**: Assign different videos to each button
 
-- **Operating System:** Raspbian (or a compatible Debian-based OS)
-- **Python:** Python 3.x installed
-- **Hardware:** Raspberry Pi 4 with buttons connected to GPIO pins
-- **System Tools:** `fbi` (for image display) and `mpv` (for video playback)
+### System Design
+- **Responsive Design**: Web interface works on desktops, tablets, and smartphones
+- **Robust Error Handling**: Comprehensive logging and user-friendly error messages
+- **Security Measures**: Input validation and secure file handling
+- **System Service**: Runs as a systemd service for automatic startup and recovery
 
-### Installing Required System Packages
+## Hardware Requirements
 
-Open a terminal on your Raspberry Pi and run:
+- **Raspberry Pi 4** (2GB+ RAM recommended)
+- **Display**: HDMI-connected monitor or TV
+- **Storage**: MicroSD card (16GB+ recommended) with Raspberry Pi OS
+- **Input**: Three momentary push buttons connected to GPIO pins
+- **Power**: Stable 5V/3A power supply
+- **Network**: Ethernet connection or WiFi for accessing the web interface
+
+## Software Prerequisites
+
+- **Operating System**: Raspberry Pi OS (formerly Raspbian) Bullseye or newer
+- **Python**: Python 3.7+ (included with Raspberry Pi OS)
+- **System Utilities**: `fbi` for image display and `mpv` for video playback
+- **Network**: Configured network connection with assigned IP address
+
+## Installation Guide
+
+### 1. System Preparation
+
+Start with a fresh installation of Raspberry Pi OS (Lite version is sufficient). Open a terminal and update your system:
 
 ```bash
 sudo apt update
-sudo apt install python3 python3-pip fbi mpv git
-Installing Python Dependencies
-Install the required Python libraries using pip:
+sudo apt upgrade -y
+```
 
-bash
-Copy
-pip3 install flask RPi.GPIO werkzeug
-Software Installation
-Clone the Repository
+### 2. Install Required System Packages
 
-Clone your project repository into the base directory (for example, /home/tech):
+Install the necessary system utilities and development tools:
 
-bash
-Copy
-git clone https://your-repository-url.git
-cd your-repository-directory
-Project Structure Overview
+```bash
+sudo apt install -y python3-pip python3-dev git fbi mpv
+```
 
-Your project directory might look like this:
+### 3. Install Python Dependencies
 
-bash
-Copy
-/home/tech/
-├── app.py                    # Main Python script (Flask and GPIO integration)
-├── video_button.log          # Log file for debugging
-├── default_image.png         # Default image to display
-├── default_video1.mp4        # Default video for button 1
-├── default_video2.mp4        # Default video for button 2
-├── default_video3.mp4        # Default video for button 3
-├── uploads/                  # Directory for uploaded media files
-└── templates/
-    └── index.html            # HTML template for the web interface
-Configuration
+Install the required Python libraries:
 
-The application uses hardcoded paths and constants (like BASE_DIR and button GPIO pins) in app.py. Modify these values if your setup differs.
+```bash
+sudo pip3 install flask werkzeug RPi.GPIO
+```
 
-Running as a System Service
-To run the Video Button Interface as a systemd service on your Raspberry Pi 4, follow these steps:
+### 4. Create Project Directory Structure
 
-Create the Systemd Service File
+Set up the project directory structure:
 
-Create a new service file named video_button.service:
+```bash
+sudo mkdir -p /home/tech/uploads
+sudo mkdir -p /home/tech/templates
+sudo chown -R pi:pi /home/tech  # Replace 'pi' with your username if different
+```
 
-bash
-Copy
-sudo nano /etc/systemd/system/video_button.service
-Paste the following configuration into the file:
+### 5. Download the Software
 
-ini
-Copy
+Clone the repository (or download and place the files manually):
+
+```bash
+cd /home/tech
+git clone https://your-repository-url.git .
+# Or manually copy app.py to /home/tech and index.html to /home/tech/templates
+```
+
+### 6. Prepare Default Media Files
+
+Place your default image and videos in the base directory:
+
+```bash
+# Ensure these files exist (create empty ones if needed for testing)
+touch /home/tech/default_image.png
+touch /home/tech/default_video1.mp4
+touch /home/tech/default_video2.mp4
+touch /home/tech/default_video3.mp4
+```
+
+### 7. Setting Up the System Service
+
+Creating a system service allows the Video Button Interface to start automatically when your Raspberry Pi boots and restart if it crashes.
+
+#### Create the Service File
+
+```bash
+sudo nano /etc/systemd/system/video-button.service
+```
+
+Add the following content, adjusting the user and paths as needed:
+
+```ini
 [Unit]
-Description=Video Button Interface Service
+Description=Video Button Interface
 After=network.target
 
 [Service]
@@ -98,67 +135,203 @@ User=pi
 WorkingDirectory=/home/tech
 ExecStart=/usr/bin/python3 /home/tech/app.py
 Restart=on-failure
+RestartSec=5
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=video-button
 Environment=PYTHONUNBUFFERED=1
 
 [Install]
 WantedBy=multi-user.target
-Note:
+```
 
-Replace User=pi with your appropriate username if different.
+#### Enable and Start the Service
 
-Ensure the WorkingDirectory and ExecStart paths point to your project directory and main script (app.py).
-
-Reload the Systemd Daemon
-
-Reload systemd to recognize the new service:
-
-bash
-Copy
+```bash
+# Reload systemd to recognize the new service
 sudo systemctl daemon-reload
-Enable the Service
 
-Enable the service to start on boot:
+# Enable the service to start on boot
+sudo systemctl enable video-button.service
 
-bash
-Copy
-sudo systemctl enable video_button.service
-Start the Service
+# Start the service immediately
+sudo systemctl start video-button.service
 
-Start the service immediately:
+# Check the status
+sudo systemctl status video-button.service
+```
 
-bash
-Copy
-sudo systemctl start video_button.service
-Verify the Service Status
+The service should now be running. The web interface will be available at `http://[raspberry-pi-ip]:5000`
 
-Check that the service is running properly:
+### 8. Testing the Installation
 
-bash
-Copy
-sudo systemctl status video_button.service
-You should see that the service is active and running. For troubleshooting, consult the logs using:
+1. **Check Service Status**:
+   ```bash
+   sudo systemctl status video-button.service
+   ```
+   Look for "active (running)" in the output.
 
-bash
-Copy
-journalctl -u video_button.service
-Troubleshooting
-GPIO Issues:
-Verify that your physical buttons are correctly wired to the designated GPIO pins (default: 17, 27, 22).
+2. **View Logs**:
+   ```bash
+   sudo journalctl -u video-button.service -f
+   ```
+   This shows live logs from the service.
 
-Media Playback Issues:
-Ensure that fbi and mpv are installed and that your media files (images and videos) are located in the expected directories.
+3. **Access Web Interface**:
+   Open a browser on another device and navigate to `http://[raspberry-pi-ip]:5000`
 
-Logging:
-Check the log file (/home/tech/video_button.log) for any errors or debugging information.
+4. **Test Button Functionality**:
+   Press the physical buttons connected to GPIO pins to verify video playback.
 
-Conclusion
-This guide outlines how to install and run the Video Button Interface on a Raspberry Pi 4 as a system service. The system integrates a Flask-based web interface with physical button controls via GPIO, allowing for flexible media playback control. For further customization or troubleshooting, refer to the project source code and log files.
+## Hardware Setup Guide
 
-Happy hacking!
+### Connecting Buttons to GPIO
 
-yaml
-Copy
+1. **Button Wiring**:
+   - Connect one terminal of each button to the respective GPIO pin (default: 17, 27, 22)
+   - Connect the other terminal of each button to a GND pin on the Raspberry Pi
+
+2. **Pin References**:
+   The default configuration uses these pins:
+   - Button 1: GPIO 17
+   - Button 2: GPIO 27
+   - Button 3: GPIO 22
+
+3. **GPIO Diagram**:
+   For pin locations, refer to the [Raspberry Pi GPIO pinout diagram](https://pinout.xyz/).
+
+### Display Connection
+
+Connect your display to the Raspberry Pi's HDMI port. The application is configured to use the primary HDMI output.
+
+## Customization
+
+### Changing GPIO Pins
+
+To use different GPIO pins, modify the `BUTTON_PINS` list in `app.py`:
+
+```python
+# Define three button pins
+BUTTON_PINS = [17, 27, 22]  # Change these numbers to your preferred GPIO pins
+```
+
+### Directory Configuration
+
+If you want to use a different base directory, update the `BASE_DIR` variable:
+
+```python
+BASE_DIR = "/home/tech"  # Change to your preferred directory
+```
+
+## Troubleshooting
+
+### Service Won't Start
+
+Check the logs for detailed error messages:
+
+```bash
+sudo journalctl -u video-button.service -e
+```
+
+Common issues:
+- **GPIO Access**: Ensure the service is running as a user with GPIO access
+- **Missing Files**: Check if all required paths and files exist
+- **Port Conflict**: Ensure no other service is using port 5000
+
+### Video Playback Issues
+
+1. **Check MPV Installation**:
+   ```bash
+   mpv --version
+   ```
+
+2. **Test Video Playback Manually**:
+   ```bash
+   mpv --vo=gpu --fullscreen /home/tech/default_video1.mp4
+   ```
+
+3. **Check Video Format Compatibility**:
+   Ensure your video files are in a format supported by mpv.
+
+### Web Interface Not Accessible
+
+1. **Check Network Configuration**:
+   ```bash
+   hostname -I
+   ```
+   Verify you're using the correct IP address.
+
+2. **Check Firewall Settings**:
+   ```bash
+   sudo ufw status
+   ```
+   Ensure port 5000 is allowed if the firewall is active.
+
+3. **Test Local Access**:
+   ```bash
+   curl http://localhost:5000
+   ```
+   If this works but remote access doesn't, it's likely a network issue.
+
+## Maintenance
+
+### Updating the Software
+
+To update the software to the latest version:
+
+```bash
+cd /home/tech
+git pull
+
+# Restart the service
+sudo systemctl restart video-button.service
+```
+
+### Backing Up Configuration
+
+Back up your media files and configuration:
+
+```bash
+sudo cp -r /home/tech /backup/video-button-$(date +%Y%m%d)
+```
+
+## Technical Details
+
+### Application Architecture
+
+The Video Button Interface consists of:
+
+1. **Flask Web Server**: Handles HTTP requests, renders the web interface, and manages file uploads
+2. **GPIO Monitor Thread**: Continuously monitors button presses in a separate thread
+3. **Media Manager**: Controls the display of images and playback of videos
+4. **Event System**: Coordinates between button presses and the web interface
+
+### File Structure
+
+```
+/home/tech/
+├── app.py                    # Main application script
+├── video_button.log          # Application log file
+├── default_image.png         # Default display image
+├── default_video1.mp4        # Video for button 1
+├── default_video2.mp4        # Video for button 2
+├── default_video3.mp4        # Video for button 3
+├── uploads/                  # Directory for uploaded media
+└── templates/
+    └── index.html            # Web interface template
+```
+
+## License and Contributions
+
+This project is distributed under the [appropriate license]. Contributions are welcome via pull requests or issue reports on the GitHub repository.
+
+## Support
+
+For additional support:
+- Check the [GitHub repository](https://your-repository-url.git) for updates
+- Open an issue on GitHub for bug reports
+- Contact the developer at [your-email]
 
 ---
 
-Feel free to adjust paths, user names, or repository URLs as needed for your setup. This document sho
+This project makes use of several open-source technologies, including Flask, RPi.GPIO, fbi, and mpv. Thank you to the developers of these tools for making this project possible.
