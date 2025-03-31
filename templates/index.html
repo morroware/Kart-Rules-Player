@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Video Button Interface</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .button-container {
+      display: flex;
+      justify-content: space-around;
+      margin: 20px 0;
+    }
+    .button-container form {
+      margin: 0;
+    }
+    .btn {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+    }
+    .btn:hover {
+      background-color: #45a049;
+    }
+    .flashes {
+      list-style-type: none;
+      padding: 0;
+    }
+    .flashes li {
+      margin: 5px 0;
+      padding: 10px;
+      border-radius: 3px;
+    }
+    .success { background-color: #d4edda; color: #155724; }
+    .error { background-color: #f8d7da; color: #721c24; }
+    .warning { background-color: #fff3cd; color: #856404; }
+    form { margin-bottom: 20px; }
+    label { display: block; margin-top: 10px; }
+    select, input[type="file"] {
+      width: 100%;
+      padding: 8px;
+      margin: 8px 0;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    .section {
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #eee;
+    }
+    .current-settings {
+      background-color: #f8f9fa;
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+    }
+    .current-settings h3 {
+      margin-top: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Video Button Interface</h1>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class="flashes">
+          {% for category, message in messages %}
+            <li class="{{ category }}">{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    <!-- Current Settings -->
+    <div class="current-settings section">
+      <h2>Current Settings</h2>
+      
+      <h3>Display Image</h3>
+      <p>Current Image: <strong>{{ current_image_name }}</strong></p>
+      
+      <h3>Button Video Assignments</h3>
+      <ul>
+        {% for video in current_videos %}
+          <li>Button {{ video.id }}: <strong>{{ video.name }}</strong></li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <!-- Playback Status -->
+    <div class="status section">
+      <h2>Playback Status</h2>
+      {% if is_playing %}
+        <p>Video is currently playing...</p>
+      {% else %}
+        <p>No video playing. Press a button to start playback.</p>
+      {% endif %}
+    </div>
+
+    <!-- Three Play Buttons -->
+    <div class="section">
+      <h2>Test Playback</h2>
+      <div class="button-container">
+        <form action="{{ url_for('play') }}" method="get">
+          <input type="hidden" name="button" value="1">
+          <button type="submit" class="btn">Play Video 1</button>
+        </form>
+        <form action="{{ url_for('play') }}" method="get">
+          <input type="hidden" name="button" value="2">
+          <button type="submit" class="btn">Play Video 2</button>
+        </form>
+        <form action="{{ url_for('play') }}" method="get">
+          <input type="hidden" name="button" value="3">
+          <button type="submit" class="btn">Play Video 3</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Select from Available Files -->
+    <div class="section">
+      <h2>Select Existing File</h2>
+      <form action="{{ url_for('select_file') }}" method="post">
+        <label for="type">File Type:</label>
+        <select name="type" id="type" onchange="toggleButtonSelection(this.value, 'select-button-div')">
+          <option value="image">Image</option>
+          <option value="video">Video</option>
+        </select>
+        
+        <div id="select-files-container">
+          <label for="path">Choose File:</label>
+          <select name="path" id="path">
+            {% if type == 'image' or not type %}
+              <optgroup label="Images">
+                {% for filename, filepath in images %}
+                  <option value="{{ filepath }}">{{ filename }}</option>
+                {% endfor %}
+              </optgroup>
+            {% endif %}
+            
+            {% if type == 'video' or not type %}
+              <optgroup label="Videos">
+                {% for filename, filepath in videos %}
+                  <option value="{{ filepath }}">{{ filename }}</option>
+                {% endfor %}
+              </optgroup>
+            {% endif %}
+          </select>
+        </div>
+        
+        <div id="select-button-div" style="display:none;">
+          <label for="button_select">For Video, select Button Number:</label>
+          <select name="button" id="button_select">
+            <option value="1">Button 1</option>
+            <option value="2">Button 2</option>
+            <option value="3">Button 3</option>
+          </select>
+        </div>
+        
+        <button type="submit" class="btn">Update Selection</button>
+      </form>
+    </div>
+
+    <!-- Upload a New File -->
+    <div class="section">
+      <h2>Upload New File</h2>
+      <form action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data">
+        <label for="file">Select File to Upload:</label>
+        <input type="file" name="file" id="file" accept=".png,.jpg,.jpeg,.gif,.mp4,.mov,.avi,.mkv">
+        
+        <div id="upload-button-div" style="display:none;">
+          <label for="button_upload">For Video, select Button Number:</label>
+          <select name="button" id="button_upload">
+            <option value="1">Button 1</option>
+            <option value="2">Button 2</option>
+            <option value="3">Button 3</option>
+          </select>
+        </div>
+        
+        <button type="submit" class="btn">Upload File</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Automatically determine file type from file input and show button selection if needed
+    document.getElementById('file').addEventListener('change', function() {
+      var fileName = this.value.toLowerCase();
+      var buttonDiv = document.getElementById('upload-button-div');
+      
+      if (fileName.endsWith('.mp4') || fileName.endsWith('.mov') || 
+          fileName.endsWith('.avi') || fileName.endsWith('.mkv')) {
+        buttonDiv.style.display = 'block';
+      } else {
+        buttonDiv.style.display = 'none';
+      }
+    });
+
+    // Toggle the display of button selection based on file type for existing files
+    function toggleButtonSelection(selectedType, divId) {
+      var div = document.getElementById(divId);
+      if (selectedType === "video") {
+        div.style.display = "block";
+      } else {
+        div.style.display = "none";
+      }
+    }
+    
+    // Initialize on page load
+    window.onload = function() {
+      toggleButtonSelection(document.getElementById("type").value, 'select-button-div');
+    }
+  </script>
+</body>
+</html>
